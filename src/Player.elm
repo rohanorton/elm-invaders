@@ -34,14 +34,20 @@ update msg ({ center, size } as model) =
         Left ->
             let
                 center' =
-                    { center | x = center.x - 2 }
+                    if center.x < 0 then
+                        center
+                    else
+                        { center | x = center.x - 2 }
             in
                 { model | center = center' }
 
         Right ->
             let
                 center' =
-                    { center | x = center.x + 2 }
+                    if center.x > 310 then
+                        center
+                    else
+                        { center | x = center.x + 2 }
             in
                 { model | center = center' }
 
