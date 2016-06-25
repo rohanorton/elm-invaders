@@ -6,6 +6,7 @@ import AnimationFrame
 import Player
 import Invader
 import Bullet
+import Entity
 import Board
 
 
@@ -85,6 +86,7 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
 
                 invaders' =
                     List.map (Invader.update Invader.Tick) invaders
+                        |> List.filter (isNotHit bullets')
             in
                 { model
                     | player = player'
@@ -99,6 +101,44 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                     Kb.update keyboardMsg model.keyboard
             in
                 { model | keyboard = keyboardModel } ! [ Cmd.map Key keyboardCmd ]
+
+
+isNotHit : List Bullet.Model -> Invader.Model -> Bool
+isNotHit bullets invader =
+    List.filter (isColliding invader) bullets
+        |> List.isEmpty
+
+
+isColliding : { a | center : Entity.Vector, size : Entity.Vector } -> { b | center : Entity.Vector, size : Entity.Vector } -> Bool
+isColliding b1 b2 =
+    not
+        (( b1.center, b1.size )
+            == ( b2.center, b2.size )
+            || b1.center.x
+            + b1.size.x
+            / 2
+            <= b2.center.x
+            - b2.size.x
+            / 2
+            || b1.center.y
+            + b1.size.y
+            / 2
+            <= b2.center.y
+            - b2.size.y
+            / 2
+            || b1.center.x
+            - b1.size.x
+            / 2
+            >= b2.center.x
+            + b2.size.x
+            / 2
+            || b1.center.y
+            - b1.size.y
+            / 2
+            >= b2.center.y
+            + b2.size.y
+            / 2
+        )
 
 
 
