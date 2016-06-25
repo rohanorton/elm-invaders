@@ -61,7 +61,7 @@ type Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ({ player, keyboard } as model) =
+update msg ({ player, invaders, keyboard } as model) =
     case msg of
         Tick ->
             let
@@ -72,8 +72,11 @@ update msg ({ player, keyboard } as model) =
                         Player.update Player.Right player
                     else
                         player
+
+                invaders' =
+                    List.map (Invader.update Invader.Tick) invaders
             in
-                { model | player = player' } ! []
+                { model | player = player', invaders = invaders' } ! []
 
         Key keyboardMsg ->
             let
