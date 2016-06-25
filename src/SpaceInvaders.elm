@@ -5,6 +5,7 @@ import Keyboard.Extra as Kb
 import AnimationFrame
 import Player
 import Invader
+import Bullet
 import Board
 
 
@@ -13,7 +14,8 @@ import Board
 
 type alias Model =
     { player : Player.Model
-    , invaders : List (Invader.Model)
+    , invaders : List Invader.Model
+    , bullets : List Bullet.Model
     , board : Board.Model
     , keyboard : Kb.Model
     }
@@ -32,6 +34,7 @@ init =
     in
         { player = Player.init board
         , invaders = invadersInit
+        , bullets = []
         , board = board
         , keyboard = kbmodel
         }
@@ -61,7 +64,7 @@ type Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ({ player, invaders, keyboard } as model) =
+update msg ({ player, invaders, keyboard, bullets } as model) =
     case msg of
         Tick ->
             let
@@ -73,10 +76,22 @@ update msg ({ player, invaders, keyboard } as model) =
                     else
                         player
 
+                bullets' =
+                    if Kb.isPressed Kb.Space keyboard then
+                        Bullet.init board player'.center { x = 0, y = -6 }
+                            :: List.map (Bullet.update Bullet.Tick) bullets
+                    else
+                        List.map (Bullet.update Bullet.Tick) bullets
+
                 invaders' =
                     List.map (Invader.update Invader.Tick) invaders
             in
-                { model | player = player', invaders = invaders' } ! []
+                { model
+                    | player = player'
+                    , invaders = invaders'
+                    , bullets = bullets'
+                }
+                    ! []
 
         Key keyboardMsg ->
             let
@@ -108,4 +123,5 @@ view model =
         [ Board.view model.board
             <| Player.view model.player
             :: List.map Invader.view model.invaders
+            ++ List.map Bullet.view model.bullets
         ]
