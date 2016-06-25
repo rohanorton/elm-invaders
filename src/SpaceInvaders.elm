@@ -4,6 +4,7 @@ import Html exposing (Html, text, div)
 import Keyboard.Extra as Kb
 import AnimationFrame
 import Player
+import Invader
 import Board
 
 
@@ -12,6 +13,7 @@ import Board
 
 type alias Model =
     { player : Player.Model
+    , invaders : List (Invader.Model)
     , board : Board.Model
     , keyboard : Kb.Model
     }
@@ -29,10 +31,24 @@ init =
             Kb.init
     in
         { player = Player.init board
+        , invaders = invadersInit
         , board = board
         , keyboard = kbmodel
         }
             ! [ Cmd.map Key kbcmd ]
+
+
+invadersInit : List Invader.Model
+invadersInit =
+    List.map createInvader [0..24]
+
+
+createInvader : Int -> Invader.Model
+createInvader int =
+    Invader.init board
+        { x = toFloat <| 30 + int % 8 * 30
+        , y = toFloat <| 30 + int % 3 * 30
+        }
 
 
 
@@ -86,5 +102,7 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ Board.view model.board [ Player.view model.player ]
+        [ Board.view model.board
+            <| Player.view model.player
+            :: List.map Invader.view model.invaders
         ]
