@@ -69,20 +69,18 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
     case msg of
         Tick ->
             let
-                player' =
+                ( player', playerBullets ) =
                     if Kb.isPressed Kb.ArrowLeft keyboard then
                         Player.update Player.Left player
                     else if Kb.isPressed Kb.ArrowRight keyboard then
                         Player.update Player.Right player
+                    else if Kb.isPressed Kb.Space keyboard then
+                        Player.update (Player.Shoot board) player
                     else
-                        player
+                        ( player, [] )
 
                 bullets' =
-                    if Kb.isPressed Kb.Space keyboard then
-                        Bullet.init board player'.center { x = 0, y = -6 }
-                            :: List.map (Bullet.update Bullet.Tick) bullets
-                    else
-                        List.map (Bullet.update Bullet.Tick) bullets
+                    playerBullets ++ List.map (Bullet.update Bullet.Tick) bullets
 
                 invaders' =
                     List.map (Invader.update Invader.Tick) invaders

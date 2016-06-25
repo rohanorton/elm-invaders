@@ -3,6 +3,7 @@ module Player exposing (Model, init, update, view, Msg(..))
 import Svg exposing (Svg, svg, rect)
 import Svg.Attributes exposing (x, y, width, height)
 import Entity
+import Bullet
 
 
 -- Model
@@ -26,9 +27,10 @@ init board =
 type Msg
     = Left
     | Right
+    | Shoot Entity.Model
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, List Bullet.Model )
 update msg ({ center, size } as model) =
     case msg of
         Left ->
@@ -39,7 +41,7 @@ update msg ({ center, size } as model) =
                     else
                         { center | x = center.x - 2 }
             in
-                { model | center = center' }
+                ( { model | center = center' }, [] )
 
         Right ->
             let
@@ -49,7 +51,10 @@ update msg ({ center, size } as model) =
                     else
                         { center | x = center.x + 2 }
             in
-                { model | center = center' }
+                ( { model | center = center' }, [] )
+
+        Shoot board ->
+            ( model, [ Bullet.init board center { x = 0, y = -6 } ] )
 
 
 
