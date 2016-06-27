@@ -70,6 +70,7 @@ createInvader int =
 
 type Msg
     = Tick
+    | SubMsg Int Invader.Msg
     | Key Kb.Msg
 
 
@@ -91,16 +92,22 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                 bullets' =
                     playerBullets ++ List.map (Bullet.update Bullet.Tick) bullets
 
-                invaders' =
+                ( invaders', invaderCmds ) =
                     List.map (updateInvader Invader.Tick) invaders
-                        |> List.filter (isNotHit bullets')
+                        |> List.unzip
+
+                invaders'' =
+                    List.filter (isNotHit bullets') invaders'
             in
                 { model
                     | player = player'
-                    , invaders = invaders'
+                    , invaders = invaders''
                     , bullets = bullets'
                 }
-                    ! []
+                    ! invaderCmds
+
+        SubMsg id subMsg ->
+            model ! []
 
         Key keyboardMsg ->
             let
@@ -110,10 +117,13 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                 { model | keyboard = keyboardModel } ! [ Cmd.map Key keyboardCmd ]
 
 
-updateInvader : Invader.Msg -> IndexedInvader -> IndexedInvader
+updateInvader : Invader.Msg -> IndexedInvader -> ( IndexedInvader, Cmd Msg )
 updateInvader msg { id, model } =
-    Invader.update msg model
-        |> IndexedInvader id
+    let
+        ( invader, cmds ) =
+            Invader.update msg model
+    in
+        IndexedInvader id invader ! [ Cmd.map (SubMsg id) cmds ]
 
 
 isNotHit : List Bullet.Model -> IndexedInvader -> Bool

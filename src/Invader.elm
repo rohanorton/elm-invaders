@@ -33,7 +33,7 @@ type Msg
     = Tick
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({ center, size, patrolX, speedX } as model) =
     case msg of
         Tick ->
@@ -55,6 +55,7 @@ update msg ({ center, size, patrolX, speedX } as model) =
                     , patrolX = patrolX'
                     , speedX = speedX'
                 }
+                    ! []
 
 
 
