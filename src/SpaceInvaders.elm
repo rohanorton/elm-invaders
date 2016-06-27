@@ -70,7 +70,7 @@ createInvader int =
 
 type Msg
     = Tick
-    | SubMsg Int Invader.Msg
+    | InvaderMsg Int Invader.Msg
     | Key Kb.Msg
 
 
@@ -93,7 +93,7 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                     playerBullets ++ List.map (Bullet.update Bullet.Tick) bullets
 
                 ( invaders', invaderCmds ) =
-                    List.map (updateInvader Invader.Tick) invaders
+                    List.map (updateInvaders Invader.Tick) invaders
                         |> List.unzip
 
                 invaders'' =
@@ -106,8 +106,13 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                 }
                     ! invaderCmds
 
-        SubMsg id subMsg ->
-            model ! []
+        InvaderMsg id subMsg ->
+            let
+                ( invaders', cmds ) =
+                    List.map (updateInvader id subMsg) invaders
+                        |> List.unzip
+            in
+                { model | invaders = invaders } ! cmds
 
         Key keyboardMsg ->
             let
@@ -117,13 +122,21 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                 { model | keyboard = keyboardModel } ! [ Cmd.map Key keyboardCmd ]
 
 
-updateInvader : Invader.Msg -> IndexedInvader -> ( IndexedInvader, Cmd Msg )
-updateInvader msg { id, model } =
+updateInvader : Int -> Invader.Msg -> IndexedInvader -> ( IndexedInvader, Cmd Msg )
+updateInvader targetId msg { id, model } =
     let
         ( invader, cmds ) =
-            Invader.update msg model
+            if targetId == id then
+                Invader.update msg model
+            else
+                model ! []
     in
-        IndexedInvader id invader ! [ Cmd.map (SubMsg id) cmds ]
+        IndexedInvader id invader ! [ Cmd.map (InvaderMsg id) cmds ]
+
+
+updateInvaders : Invader.Msg -> IndexedInvader -> ( IndexedInvader, Cmd Msg )
+updateInvaders msg ({ id, model } as invader) =
+    updateInvader id msg invader
 
 
 isNotHit : List Bullet.Model -> IndexedInvader -> Bool
