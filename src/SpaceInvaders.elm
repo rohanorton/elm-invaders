@@ -15,10 +15,16 @@ import Board
 
 type alias Model =
     { player : Player.Model
-    , invaders : List Invader.Model
+    , invaders : List IndexedInvader
     , bullets : List Bullet.Model
     , board : Board.Model
     , keyboard : Kb.Model
+    }
+
+
+type alias IndexedInvader =
+    { id : Int
+    , model : Invader.Model
     }
 
 
@@ -42,17 +48,20 @@ init =
             ! [ Cmd.map Key kbcmd ]
 
 
-invadersInit : List Invader.Model
+invadersInit : List IndexedInvader
 invadersInit =
     List.map createInvader [0..24]
 
 
-createInvader : Int -> Invader.Model
+createInvader : Int -> IndexedInvader
 createInvader int =
-    Invader.init board
-        { x = toFloat <| 30 + int % 8 * 30
-        , y = toFloat <| 30 + int % 3 * 30
-        }
+    { id = int
+    , model =
+        Invader.init board
+            { x = toFloat <| 30 + int % 8 * 30
+            , y = toFloat <| 30 + int % 3 * 30
+            }
+    }
 
 
 
@@ -83,7 +92,7 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                     playerBullets ++ List.map (Bullet.update Bullet.Tick) bullets
 
                 invaders' =
-                    List.map (Invader.update Invader.Tick) invaders
+                    List.map (updateInvader Invader.Tick) invaders
                         |> List.filter (isNotHit bullets')
             in
                 { model
@@ -101,9 +110,15 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                 { model | keyboard = keyboardModel } ! [ Cmd.map Key keyboardCmd ]
 
 
-isNotHit : List Bullet.Model -> Invader.Model -> Bool
-isNotHit bullets invader =
-    List.filter (isColliding invader) bullets
+updateInvader : Invader.Msg -> IndexedInvader -> IndexedInvader
+updateInvader msg { id, model } =
+    Invader.update msg model
+        |> IndexedInvader id
+
+
+isNotHit : List Bullet.Model -> IndexedInvader -> Bool
+isNotHit bullets { model } =
+    List.filter (isColliding model) bullets
         |> List.isEmpty
 
 
@@ -139,6 +154,6 @@ view model =
     div []
         [ Board.view model.board
             <| Player.view model.player
-            :: List.map Invader.view model.invaders
+            :: List.map (Invader.view << .model) model.invaders
             ++ List.map Bullet.view model.bullets
         ]
