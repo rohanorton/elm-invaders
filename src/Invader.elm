@@ -2,7 +2,9 @@ module Invader exposing (Model, init, update, view, Msg(..))
 
 import Svg exposing (Svg, svg, rect)
 import Svg.Attributes exposing (x, y, width, height)
+import Random
 import Entity
+import Bullet
 
 
 -- Model
@@ -31,9 +33,17 @@ init board center =
 
 type Msg
     = Tick
+    | Shoot Int
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+board : Entity.Model
+board =
+    { size = { x = 310, y = 310 }
+    , center = { x = 310 / 2, y = 310 / 2 }
+    }
+
+
+update : Msg -> Model -> ( Model, Cmd Msg, List Bullet.Model )
 update msg ({ center, size, patrolX, speedX } as model) =
     case msg of
         Tick ->
@@ -50,12 +60,24 @@ update msg ({ center, size, patrolX, speedX } as model) =
                 patrolX' =
                     patrolX + speedX'
             in
-                { model
+                ( { model
                     | center = center'
                     , patrolX = patrolX'
                     , speedX = speedX'
-                }
-                    ! []
+                  }
+                , Random.generate Shoot (Random.int 1 1000)
+                , []
+                )
+
+        Shoot chance ->
+            let
+                bullets =
+                    if chance > 995 then
+                        [ Bullet.init board center { x = 0, y = 6 } ]
+                    else
+                        []
+            in
+                ( model, Cmd.none, bullets )
 
 
 

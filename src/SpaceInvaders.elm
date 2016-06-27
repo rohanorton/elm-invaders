@@ -90,11 +90,11 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                         ( player, [] )
 
                 bullets' =
-                    playerBullets ++ List.map (Bullet.update Bullet.Tick) bullets
+                    List.concat invaderBullets ++ playerBullets ++ List.map (Bullet.update Bullet.Tick) bullets
 
-                ( invaders', invaderCmds ) =
+                ( invaders', invaderCmds, invaderBullets ) =
                     List.map (updateInvaders Invader.Tick) invaders
-                        |> List.unzip
+                        |> unzip3
 
                 invaders'' =
                     List.filter (isNotHit bullets') invaders'
@@ -108,11 +108,18 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
 
         InvaderMsg id subMsg ->
             let
-                ( invaders', cmds ) =
+                ( invaders', cmds, invaderBullets ) =
                     List.map (updateInvader id subMsg) invaders
-                        |> List.unzip
+                        |> unzip3
+
+                bullets' =
+                    List.concat invaderBullets ++ bullets
             in
-                { model | invaders = invaders } ! cmds
+                { model
+                    | invaders = invaders
+                    , bullets = bullets'
+                }
+                    ! cmds
 
         Key keyboardMsg ->
             let
@@ -122,19 +129,24 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                 { model | keyboard = keyboardModel } ! [ Cmd.map Key keyboardCmd ]
 
 
-updateInvader : Int -> Invader.Msg -> IndexedInvader -> ( IndexedInvader, Cmd Msg )
+unzip3 : List ( a, b, c ) -> ( List a, List b, List c )
+unzip3 =
+    List.foldl (\( x, y, z ) ( xs, ys, zs ) -> ( x :: xs, y :: ys, z :: zs )) ( [], [], [] )
+
+
+updateInvader : Int -> Invader.Msg -> IndexedInvader -> ( IndexedInvader, Cmd Msg, List Bullet.Model )
 updateInvader targetId msg { id, model } =
     let
-        ( invader, cmds ) =
+        ( invader, cmds, bullets ) =
             if targetId == id then
                 Invader.update msg model
             else
-                model ! []
+                ( model, Cmd.none, [] )
     in
-        IndexedInvader id invader ! [ Cmd.map (InvaderMsg id) cmds ]
+        ( IndexedInvader id invader, Cmd.map (InvaderMsg id) cmds, bullets )
 
 
-updateInvaders : Invader.Msg -> IndexedInvader -> ( IndexedInvader, Cmd Msg )
+updateInvaders : Invader.Msg -> IndexedInvader -> ( IndexedInvader, Cmd Msg, List Bullet.Model )
 updateInvaders msg ({ id, model } as invader) =
     updateInvader id msg invader
 
