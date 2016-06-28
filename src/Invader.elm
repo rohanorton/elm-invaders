@@ -73,7 +73,7 @@ update msg ({ center, size, patrolX, speedX } as model) =
             let
                 bullets =
                     if chance > 995 then
-                        [ Bullet.init board center { x = 0, y = 6 } ]
+                        [ Bullet.init board { center | y = center.y + 15 } { x = 0, y = 6 } ]
                     else
                         []
             in
