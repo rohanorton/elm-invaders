@@ -90,7 +90,10 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                         ( player, [] )
 
                 bullets' =
-                    List.concat invaderBullets ++ playerBullets ++ List.map (Bullet.update Bullet.Tick) bullets
+                    List.concat invaderBullets
+                        ++ playerBullets
+                        ++ List.map (Bullet.update Bullet.Tick) bullets
+                        |> List.filter isOnScreen
 
                 ( invaders', invaderCmds, invaderBullets ) =
                     List.map (updateInvaders Invader.Tick) invaders
@@ -127,6 +130,14 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                     Kb.update keyboardMsg model.keyboard
             in
                 { model | keyboard = keyboardModel } ! [ Cmd.map Key keyboardCmd ]
+
+
+isOnScreen : { a | center : Entity.Vector, size : Entity.Vector } -> Bool
+isOnScreen { center, size } =
+    (center.x - size.x / 2 > 0)
+        && (center.y - size.y / 2 > 0)
+        && (center.x + size.x / 2 < board.size.x)
+        && (center.y + size.y / 2 < board.size.y)
 
 
 unzip3 : List ( a, b, c ) -> ( List a, List b, List c )
