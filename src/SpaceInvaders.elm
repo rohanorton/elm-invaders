@@ -6,7 +6,7 @@ import AnimationFrame
 import Player
 import Invader
 import Bullet
-import Entity
+import Entity exposing (Entity)
 import Board
 
 
@@ -156,7 +156,7 @@ update msg ({ player, invaders, keyboard, bullets, state } as model) =
                 { model | keyboard = keyboardModel } ! [ Cmd.map Key keyboardCmd ]
 
 
-isOnScreen : { a | center : Entity.Vector, size : Entity.Vector } -> Bool
+isOnScreen : Entity a -> Bool
 isOnScreen { center, size } =
     (center.x - size.x / 2 > 0)
         && (center.y - size.y / 2 > 0)
@@ -203,12 +203,12 @@ invaderNotHit bullets { model } =
         |> List.isEmpty
 
 
-playerHit : List Bullet.Model -> { b | center : Entity.Vector, size : Entity.Vector } -> Bool
+playerHit : List Bullet.Model -> Entity b -> Bool
 playerHit bullets player =
     List.any (isColliding player) bullets
 
 
-isColliding : { a | center : Entity.Vector, size : Entity.Vector } -> { b | center : Entity.Vector, size : Entity.Vector } -> Bool
+isColliding : Entity a -> Entity b -> Bool
 isColliding b1 b2 =
     not
         ((b1.center == b2.center && b1.size == b2.size)

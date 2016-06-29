@@ -3,7 +3,7 @@ module Invader exposing (Model, init, update, view, Msg(..))
 import Svg exposing (Svg, svg, rect)
 import Svg.Attributes exposing (x, y, width, height)
 import Random
-import Entity
+import Entity exposing (Vector, Entity)
 import Bullet
 
 
@@ -11,14 +11,13 @@ import Bullet
 
 
 type alias Model =
-    { size : Entity.Vector
-    , center : Entity.Vector
-    , patrolX : Float
-    , speedX : Float
-    }
+    Entity
+        { patrolX : Float
+        , speedX : Float
+        }
 
 
-init : Entity.Model -> Entity.Vector -> Model
+init : Entity a -> Vector -> Model
 init board center =
     { size = { x = 15, y = 15 }
     , center = center
@@ -36,7 +35,7 @@ type Msg
     | Shoot Int
 
 
-board : Entity.Model
+board : Entity {}
 board =
     { size = { x = 310, y = 310 }
     , center = { x = 310 / 2, y = 310 / 2 }

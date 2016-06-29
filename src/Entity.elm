@@ -1,11 +1,12 @@
-module Entity exposing (Model, Vector)
+module Entity exposing (Entity, Vector)
 
 
 type alias Vector =
     { x : Float, y : Float }
 
 
-type alias Model =
-    { size : Vector
-    , center : Vector
+type alias Entity a =
+    { a
+        | size : Vector
+        , center : Vector
     }

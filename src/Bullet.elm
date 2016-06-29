@@ -2,20 +2,19 @@ module Bullet exposing (Model, init, update, view, Msg(..))
 
 import Svg exposing (Svg, svg, rect)
 import Svg.Attributes exposing (x, y, width, height)
-import Entity
+import Entity exposing (Vector, Entity)
 
 
 -- Model
 
 
 type alias Model =
-    { size : Entity.Vector
-    , center : Entity.Vector
-    , velocity : Entity.Vector
-    }
+    Entity
+        { velocity : Vector
+        }
 
 
-init : Entity.Model -> Entity.Vector -> Entity.Vector -> Model
+init : Entity a -> Vector -> Vector -> Model
 init board center velocity =
     { size = { x = 3, y = 3 }
     , center = center

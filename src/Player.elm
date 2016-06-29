@@ -2,7 +2,7 @@ module Player exposing (Model, init, update, view, Msg(..))
 
 import Svg exposing (Svg, svg, rect)
 import Svg.Attributes exposing (x, y, width, height)
-import Entity
+import Entity exposing (Entity)
 import Bullet
 
 
@@ -10,10 +10,10 @@ import Bullet
 
 
 type alias Model =
-    Entity.Model
+    Entity {}
 
 
-init : Entity.Model -> Model
+init : Entity a -> Model
 init board =
     { size = { x = 15, y = 15 }
     , center = { x = board.center.x, y = board.size.y - 15 }
@@ -27,7 +27,7 @@ init board =
 type Msg
     = Left
     | Right
-    | Shoot Entity.Model
+    | Shoot (Entity {})
 
 
 update : Msg -> Model -> ( Model, List Bullet.Model )

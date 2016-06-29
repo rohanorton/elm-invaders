@@ -2,11 +2,11 @@ module Board exposing (..)
 
 import Svg exposing (Svg, svg, rect)
 import Svg.Attributes exposing (x, y, width, height)
-import Entity
+import Entity exposing (Entity)
 
 
 type alias Model =
-    Entity.Model
+    Entity {}
 
 
 init : Float -> Model
