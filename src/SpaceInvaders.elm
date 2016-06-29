@@ -135,7 +135,8 @@ update msg ({ player, invaders, keyboard, bullets, state } as model) =
         InvaderMsg id subMsg ->
             let
                 ( invaders', cmds, invaderBullets ) =
-                    List.map (updateInvader id subMsg) invaders
+                    List.filter (invaderBelow invaders) invaders
+                        |> List.map (updateInvader id subMsg)
                         |> unzip3
 
                 bullets' =
@@ -161,6 +162,17 @@ isOnScreen { center, size } =
         && (center.y - size.y / 2 > 0)
         && (center.x + size.x / 2 < board.size.x)
         && (center.y + size.y / 2 < board.size.y)
+
+
+invaderBelow : List IndexedInvader -> IndexedInvader -> Bool
+invaderBelow invaders a =
+    List.filter
+        (\b ->
+            (b.model.center.y > a.model.center.y)
+                && (b.model.center.x - a.model.center.x < b.model.size.x)
+        )
+        invaders
+        |> List.isEmpty
 
 
 unzip3 : List ( a, b, c ) -> ( List a, List b, List c )
