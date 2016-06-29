@@ -1,6 +1,6 @@
 module SpaceInvaders exposing (init, update, view, subscriptions)
 
-import Html exposing (Html, text, div)
+import Html exposing (Html, text, div, h1, h2)
 import Keyboard.Extra as Kb
 import AnimationFrame
 import Player
@@ -19,7 +19,14 @@ type alias Model =
     , bullets : List Bullet.Model
     , board : Board.Model
     , keyboard : Kb.Model
+    , state : GameState
     }
+
+
+type GameState
+    = StartScreen
+    | Playing
+    | GameOver
 
 
 type alias IndexedInvader =
@@ -44,6 +51,7 @@ init =
         , bullets = []
         , board = board
         , keyboard = kbmodel
+        , state = StartScreen
         }
             ! [ Cmd.map Key kbcmd ]
 
@@ -72,11 +80,19 @@ type Msg
     = Tick
     | InvaderMsg Int Invader.Msg
     | Key Kb.Msg
+    | StartGame
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ({ player, invaders, keyboard, bullets } as model) =
+update msg ({ player, invaders, keyboard, bullets, state } as model) =
     case msg of
+        StartGame ->
+            let
+                ( model', cmd ) =
+                    init
+            in
+                { model' | state = Playing } ! [ cmd ]
+
         Tick ->
             let
                 ( player', playerBullets ) =
@@ -89,6 +105,12 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                     else
                         ( player, [] )
 
+                state' =
+                    if playerHit bullets' player' then
+                        GameOver
+                    else
+                        Playing
+
                 bullets' =
                     List.concat invaderBullets
                         ++ playerBullets
@@ -100,12 +122,13 @@ update msg ({ player, invaders, keyboard, bullets } as model) =
                         |> unzip3
 
                 invaders'' =
-                    List.filter (isNotHit bullets') invaders'
+                    List.filter (invaderNotHit bullets') invaders'
             in
                 { model
                     | player = player'
                     , invaders = invaders''
                     , bullets = bullets'
+                    , state = state'
                 }
                     ! invaderCmds
 
@@ -162,10 +185,15 @@ updateInvaders msg ({ id, model } as invader) =
     updateInvader id msg invader
 
 
-isNotHit : List Bullet.Model -> IndexedInvader -> Bool
-isNotHit bullets { model } =
+invaderNotHit : List Bullet.Model -> IndexedInvader -> Bool
+invaderNotHit bullets { model } =
     List.filter (isColliding model) bullets
         |> List.isEmpty
+
+
+playerHit : List Bullet.Model -> { b | center : Entity.Vector, size : Entity.Vector } -> Bool
+playerHit bullets player =
+    List.any (isColliding player) bullets
 
 
 isColliding : { a | center : Entity.Vector, size : Entity.Vector } -> { b | center : Entity.Vector, size : Entity.Vector } -> Bool
@@ -185,10 +213,18 @@ isColliding b1 b2 =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch
-        [ AnimationFrame.diffs (always Tick)
-        , Sub.map Key Kb.subscriptions
-        ]
+    case model.state of
+        StartScreen ->
+            Sub.batch [ Sub.map (always StartGame) Kb.subscriptions ]
+
+        Playing ->
+            Sub.batch
+                [ AnimationFrame.diffs (always Tick)
+                , Sub.map Key Kb.subscriptions
+                ]
+
+        GameOver ->
+            Sub.batch [ Sub.map (always StartGame) Kb.subscriptions ]
 
 
 
@@ -197,9 +233,38 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
+    case model.state of
+        StartScreen ->
+            startScreenView
+
+        Playing ->
+            gameView model
+
+        GameOver ->
+            gameOverView
+
+
+gameView : Model -> Html Msg
+gameView model =
     div []
         [ Board.view model.board
             <| Player.view model.player
             :: List.map (Invader.view << .model) model.invaders
             ++ List.map Bullet.view model.bullets
+        ]
+
+
+startScreenView : Html msg
+startScreenView =
+    div []
+        [ h1 [] [ text "Space Invaders!" ]
+        , h2 [] [ text "Press any key to play..." ]
+        ]
+
+
+gameOverView : Html msg
+gameOverView =
+    div []
+        [ h1 [] [ text "Game Over" ]
+        , h2 [] [ text "Press any key to start again..." ]
         ]

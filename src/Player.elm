@@ -54,7 +54,7 @@ update msg ({ center, size } as model) =
                 ( { model | center = center' }, [] )
 
         Shoot board ->
-            ( model, [ Bullet.init board center { x = 0, y = -6 } ] )
+            ( model, [ Bullet.init board { center | y = center.y - 15 } { x = 0, y = -6 } ] )
 
 
 
